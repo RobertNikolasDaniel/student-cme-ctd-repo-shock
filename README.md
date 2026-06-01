@@ -4,32 +4,30 @@ Simple, honest, useful educational spreadsheet for modeling how repo shocks impa
 
 ---
 
-# Purpose
+# PURPOSE
 
-This project demonstrates a core rates market structure idea:
+This project demonstrates a core rates market structure concept:
 
 > Treasury futures are financing-sensitive forward delivery instruments.
 
 The model isolates how repo changes propagate into:
 
 * CTD financing cost
-* Fair value Treasury futures pricing
+* Treasury futures fair value
 * Invoice price
 * Gross basis
 * Net basis
 
-The goal is not prediction or alpha generation.
-
-The goal is conceptual mastery of:
+The goal is conceptual understanding of:
 
 * financing,
 * carry,
 * delivery economics,
-* and basis mechanics.
+* and Treasury basis mechanics.
 
 ---
 
-# Inputs
+# INPUTS
 
 | Input              | Description                        |
 | ------------------ | ---------------------------------- |
@@ -46,56 +44,37 @@ The goal is conceptual mastery of:
 
 ---
 
-# Outputs
+# OUTPUTS
 
-| Output                     | Description                               |
-| -------------------------- | ----------------------------------------- |
-| Futures FRV Repo           | Fair value futures price at current repo  |
-| Futures FRV Shock          | Fair value futures price after repo shock |
-| Change In FV               | Repo-driven futures repricing             |
-| Projected Accrued Interest | Accrued interest projected to delivery    |
-| Invoice At Repo            | Invoice price at current repo             |
-| Invoice At Shock           | Invoice price after repo shock            |
-| Change In Invoice          | Repo-driven invoice repricing             |
-| CTD Accrued Interest       | Current accrued interest                  |
-| CTD Dirty Price            | Clean + accrued                           |
-| Gross Basis At Repo        | Gross basis at current repo               |
-| Gross Basis At Shock       | Gross basis after repo shock              |
-| Change In Gross            | Change in gross basis                     |
-| Net Basis At Repo          | Net basis at current repo                 |
-| Net Basis At Shock         | Net basis after repo shock                |
-| Change In Net              | Change in net basis                       |
-| Financing Cost Repo        | Current repo financing cost               |
-| Financing Cost Shock       | Financing cost after repo shock           |
-| Change In Financing Cost   | Repo-driven financing increase            |
-
----
-
-# Core Concepts
-
-The project separates Treasury futures pricing into:
-
-## Stable Carry Component
-
-Projected accrued interest.
-
-## Dynamic Financing Component
-
-Repo-sensitive futures fair value.
-
-This allows users to visualize how funding stress propagates through Treasury futures delivery economics.
+| Output                     | Description                            |
+| -------------------------- | -------------------------------------- |
+| Futures FRV Repo           | Fair value futures at current repo     |
+| Futures FRV Shock          | Fair value futures after repo shock    |
+| Change In FV               | Repo-driven futures repricing          |
+| Projected Accrued Interest | Accrued interest projected to delivery |
+| Invoice At Repo            | Invoice value at current repo          |
+| Invoice At Shock           | Invoice value after repo shock         |
+| Change In Invoice          | Repo-driven invoice repricing          |
+| CTD Accrued Interest       | Current accrued interest               |
+| CTD Dirty Price            | Clean + accrued                        |
+| Gross Basis Repo           | Gross basis at current repo            |
+| Gross Basis Shock          | Gross basis after repo shock           |
+| Change In Gross            | Change in gross basis                  |
+| Net Basis Repo             | Net basis at current repo              |
+| Net Basis Shock            | Net basis after repo shock             |
+| Change In Net              | Change in net basis                    |
+| Financing Cost Repo        | Repo financing cost                    |
+| Financing Cost Shock       | Shocked financing cost                 |
+| Change In Financing        | Repo-driven financing increase         |
 
 ---
 
-# Formulas
-
----
+# CORE FORMULAS
 
 ## Coupon Payment
 
 ```text
-CouponPayment =
-(CouponRate × Par) / Frequency
+CouponPay = (CouponRate × Par) / Frequency
 ```
 
 ---
@@ -103,10 +82,9 @@ CouponPayment =
 ## Current Accrued Interest
 
 ```text
-CTDAccruedInterest =
+CTDAccInt =
 (DaysSince / DaysInPeriod)
-×
-CouponPayment
+× CouponPay
 ```
 
 ---
@@ -115,7 +93,7 @@ CouponPayment
 
 ```text
 CTDDirty =
-CTDClean + CTDAccruedInterest
+CTDClean + CTDAccInt
 ```
 
 ---
@@ -123,41 +101,35 @@ CTDClean + CTDAccruedInterest
 ## Projected Accrued Interest
 
 ```text
-ProjectedAI =
+ProjAccInt =
 ((DaysSince + DaysToDelivery) / DaysInPeriod)
-×
-CouponPayment
+× CouponPay
 ```
 
 ---
+
+# FINANCING
 
 ## Repo Financing Cost
 
 ```text
 FinancingCostRepo =
-CTDDirty
-×
-Repo
-×
-(DaysToDelivery / 360)
+CTDDirty × Repo × (DaysToDelivery / 360)
 ```
 
 ---
 
-## Shocked Repo Financing Cost
+## Shocked Financing Cost
 
 ```text
 FinancingCostShock =
-CTDDirty
-×
-(Repo + RepoShock)
-×
-(DaysToDelivery / 360)
+CTDDirty × (Repo + RepoShock)
+× (DaysToDelivery / 360)
 ```
 
 ---
 
-## Change In Financing Cost
+## Change In Financing
 
 ```text
 ChangeInFinancing =
@@ -166,37 +138,20 @@ FinancingCostShock - FinancingCostRepo
 
 ---
 
-# Fair Value Treasury Futures Formula
+# FAIR VALUE FUTURES
 
-The model assumes Treasury futures represent a forward financed delivery relationship.
+Treasury futures fair value represents the financed forward delivery economics of the CTD bond.
 
-Projected accrued interest is removed from futures fair value because accrued coupon carry offsets financing economics during the delivery horizon.
+Projected accrued interest is removed from futures fair value because coupon carry offsets part of financing cost during the delivery horizon.
 
-```text
-FuturesFRV =
-(
-CTDDirty
-+
-FinancingCost
--
-ProjectedAI
-)
-/
-FuturesCF
-```
-
----
-
-## Futures FRV At Current Repo
+## Futures FRV At Repo
 
 ```text
 FuturesFRVRepo =
 (
 CTDDirty
-+
-FinancingCostRepo
--
-ProjectedAI
++ FinancingCostRepo
+- ProjAccInt
 )
 /
 FuturesCF
@@ -204,16 +159,14 @@ FuturesCF
 
 ---
 
-## Futures FRV At Shocked Repo
+## Futures FRV At Shock
 
 ```text
 FuturesFRVShock =
 (
 CTDDirty
-+
-FinancingCostShock
--
-ProjectedAI
++ FinancingCostShock
+- ProjAccInt
 )
 /
 FuturesCF
@@ -230,35 +183,35 @@ FuturesFRVShock - FuturesFRVRepo
 
 ---
 
-# Invoice Mechanics
+# CONVERTED FUTURES
 
-Invoice price is the converted futures value plus projected accrued interest reimbursement paid to the deliverer.
+## Converted Futures At Repo
 
 ```text
-Invoice =
-(Converted Futures)
-+
-ProjectedAI
+ConvertedRepo =
+FuturesFRVRepo × FuturesCF
 ```
 
 ---
 
-## Converted Futures
+## Converted Futures At Shock
 
 ```text
-ConvertedFutures =
-FuturesFRV × FuturesCF
+ConvertedShock =
+FuturesFRVShock × FuturesCF
 ```
 
 ---
+
+# INVOICE MECHANICS
+
+Invoice price equals converted futures value plus projected accrued interest reimbursement paid to the deliverer.
 
 ## Invoice At Repo
 
 ```text
-InvoiceAtRepo =
-(FuturesFRVRepo × FuturesCF)
-+
-ProjectedAI
+InvoiceRepo =
+ConvertedRepo + ProjAccInt
 ```
 
 ---
@@ -266,10 +219,8 @@ ProjectedAI
 ## Invoice At Shock
 
 ```text
-InvoiceAtShock =
-(FuturesFRVShock × FuturesCF)
-+
-ProjectedAI
+InvoiceShock =
+ConvertedShock + ProjAccInt
 ```
 
 ---
@@ -278,27 +229,20 @@ ProjectedAI
 
 ```text
 ChangeInInvoice =
-InvoiceAtShock - InvoiceAtRepo
+InvoiceShock - InvoiceRepo
 ```
 
 ---
 
-# Gross Basis
+# GROSS BASIS
 
 Gross basis compares CTD dirty price to converted futures value.
-
-```text
-GrossBasis =
-CTDDirty - ConvertedFutures
-```
-
----
 
 ## Gross Basis At Repo
 
 ```text
-GrossBasisAtRepo =
-CTDDirty - (FuturesFRVRepo × FuturesCF)
+GrossBasisRepo =
+CTDDirty - ConvertedRepo
 ```
 
 ---
@@ -306,8 +250,8 @@ CTDDirty - (FuturesFRVRepo × FuturesCF)
 ## Gross Basis At Shock
 
 ```text
-GrossBasisAtShock =
-CTDDirty - (FuturesFRVShock × FuturesCF)
+GrossBasisShock =
+CTDDirty - ConvertedShock
 ```
 
 ---
@@ -316,27 +260,20 @@ CTDDirty - (FuturesFRVShock × FuturesCF)
 
 ```text
 ChangeInGross =
-GrossBasisAtShock - GrossBasisAtRepo
+GrossBasisShock - GrossBasisRepo
 ```
 
 ---
 
-# Net Basis
+# NET BASIS
 
 Net basis compares CTD dirty price to full invoice value.
-
-```text
-NetBasis =
-CTDDirty - Invoice
-```
-
----
 
 ## Net Basis At Repo
 
 ```text
-NetBasisAtRepo =
-CTDDirty - InvoiceAtRepo
+NetBasisRepo =
+CTDDirty - InvoiceRepo
 ```
 
 ---
@@ -344,8 +281,8 @@ CTDDirty - InvoiceAtRepo
 ## Net Basis At Shock
 
 ```text
-NetBasisAtShock =
-CTDDirty - InvoiceAtShock
+NetBasisShock =
+CTDDirty - InvoiceShock
 ```
 
 ---
@@ -354,28 +291,29 @@ CTDDirty - InvoiceAtShock
 
 ```text
 ChangeInNet =
-NetBasisAtShock - NetBasisAtRepo
+NetBasisShock - NetBasisRepo
 ```
 
 ---
 
-# Educational Insight
+# CORE INSIGHT
 
-The project demonstrates a key institutional relationship:
+The project demonstrates the financing transmission mechanism inside Treasury futures delivery economics:
 
 ```text
 Repo ↑
 → Financing Cost ↑
-→ Futures Fair Value ↑
+→ Futures FRV ↑
+→ Converted Futures ↑
 → Invoice ↑
 → Basis Relationship Changes
 ```
 
-This highlights how Treasury basis trades are fundamentally financing-sensitive balance sheet structures, not just directional rate trades.
+This highlights how Treasury basis structures are highly sensitive to financing conditions and repo market stress.
 
 ---
 
-# Disclaimer
+# DISCLAIMER
 
 Educational student project only.
 
